@@ -1,3 +1,5 @@
+require 'pry'
+
 class Sudoku
 
   def initialize(row, column)
@@ -17,11 +19,17 @@ class Sudoku
     # (0..2).each do |i|
 
     # end
+    # Want to keep track of the element that's "fixed"
+  end
+
+  def is_fixed(i, j)
+    return false
   end
 
   def fill(i, j, arr, idx)
     return false if arr[idx].nil?
     return true if @board[i][j].nil?
+    # return true  is_fixed(i, j)
 
     @board[i][j] = arr[idx]
 
@@ -29,41 +37,31 @@ class Sudoku
     next_i = i
     next_j = j+1
 
-    if j + 1 > @board[i].count
+    if next_j >= @board[i].count
       next_i += 1
       next_j = 0
     end
 
     return true if next_i == @board.count
+
     next_pos = possible_numbers(next_i, next_j)
 
-    while !fill(next_i, next_j, next_pos, 0)
-      fill(i, j, arr, idx+1)
-    end
+    return true if fill(next_i, next_j, next_pos, 0)
 
-    # get possible number
-    # return true && fill(next)
+    return true && fill(i, j, arr, idx + 1)
   end
 
   def solve
-    # solve the puzzle
-    arr = possible_numbers(i, j)
-    is_solved? = fill(0, 0, arr, 0)
-    # @board.each_with_index do |row, i|
-    #   row.each_with_index do |a, j|
-    #     arr = possible_number_from_box(i, j)
-
-
-    #   end
-    # end
+    arr = possible_numbers(0, 0)
+    fill(0, 0, arr, 0)
   end
 
   # return x, y
   # the upper left most coord of the "box"
   # that i,j belongs to
   def upper_left_box(i, j)
-    x = Math.floor(i / @box_height) * @box_height
-    y = Math.floor(j / @box_width) * @box_width
+    x = (i / @box_height).floor * @box_height
+    y = (j / @box_width).floor * @box_width
 
     return x, y
   end
@@ -86,6 +84,7 @@ class Sudoku
         possible.delete(value) if x == i || y == j || xy_in_ij_box?(i,j,x,y)
       end
     end
+    possible
   end
 
   def print_board
@@ -99,5 +98,7 @@ class Sudoku
   end
 end
 
-sudoku = Sudoku.new(4, 4)
+sudoku = Sudoku.new(9, 9)
+sudoku.solve
 sudoku.print_board
+
