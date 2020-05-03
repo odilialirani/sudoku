@@ -1,3 +1,7 @@
+# Made with <3 by Odilia Lirani
+# Remember to take a break jg
+# Jgn marah2in inanimate objects
+
 require 'pry'
 
 class Sudoku
@@ -5,55 +9,83 @@ class Sudoku
   def initialize(row, column)
     puts "Creating #{row}x#{column} board"
     
+    @row = row
+    @column = column
+
     @box_height = Math.sqrt(row)
     @box_width = Math.sqrt(column)
     @max_value = @box_height * @box_width
 
     @board = Array.new(row){Array.new(column, 0)}
+    @pos_board = Array.new(row){Array.new(column, [])}
   end
 
   def randomize
-    # fill in random spots
-    # get random number n -- number of given soln
-    # for each iteration, get random i and j, call possible number
-    # (0..2).each do |i|
+    @fixed_board = @board = Array.new(row){Array.new(column, 0)}
+    row = @board.count
+    column = @board[0].count
 
-    # end
-    # Want to keep track of the element that's "fixed"
+    fill_count = (0.1 * row * column).floor
+    
+    x = 0
+    while x < fill_count
+      i = rand(0...row)
+      j = rand(0...column)
+      pos = possible_numbers(i,j)
+
+      if @board[i][j] == 0
+        @board[i][j] = pos[rand(0...pos.count)]
+        @fixed_board[i][j] = @board[i][j]
+        x += 1
+      end
+    end
   end
 
   def is_fixed(i, j)
     return false
   end
 
-  def fill(i, j, arr, idx)
-    return false if arr[idx].nil?
-    return true if @board[i][j].nil?
-    # return true  is_fixed(i, j)
-
-    @board[i][j] = arr[idx]
-
-    # find next i, j
-    next_i = i
-    next_j = j+1
-
-    if next_j >= @board[i].count
-      next_i += 1
-      next_j = 0
+  def check_possibilities(i, j)
+    @board.each_with_index do |row, x|
+      row.each_with_index do |value, y|
+        if i.nil? && j.nil?
+          @pos_board[x][y] = possible_numbers(x, y)
+        else
+          # We only want to update the possibilities for the row, col, and box if ij
+          @pos_board[x][y] = possible_numbers(x, y) if x == i || y == j || xy_in_ij_box?(i,j,x,y)
+        end
+      end
     end
-
-    return true if next_i == @board.count
-
-    next_pos = possible_numbers(next_i, next_j)
-
-    return true if fill(next_i, next_j, next_pos, 0)
-
-    return true && fill(i, j, arr, idx + 1)
   end
 
+  # def fill(i, j, arr, idx)
+  #   return false if arr[idx].nil?
+  #   return true if @board[i][j].nil?
+  #   # return true  is_fixed(i, j)
+
+  #   @board[i][j] = arr[idx]
+
+  #   # find next i, j
+  #   next_i = i
+  #   next_j = j+1
+
+  #   if next_j >= @board[i].count
+  #     next_i += 1
+  #     next_j = 0
+  #   end
+
+  #   return true if next_i == @board.count
+
+  #   next_pos = possible_numbers(next_i, next_j)
+
+  #   return true if fill(next_i, next_j, next_pos, 0)
+
+  #   return true && fill(i, j, arr, idx + 1)
+  # end
+
   def solve
-    arr = possible_numbers(0, 0)
-    fill(0, 0, arr, 0)
+    # Want to fill the one with least possibilities
+
   end
 
   # return x, y
@@ -96,9 +128,21 @@ class Sudoku
       puts r
     end
   end
+
+  def print_pos_board
+    @pos_board.each_with_index do |row, i|
+      r = ""
+      row.each_with_index do |a, j|
+        r << "#{a} |"
+      end
+      puts r
+    end
+  end
 end
 
 sudoku = Sudoku.new(9, 9)
-sudoku.solve
+binding.pry
+sudoku.randomize
 sudoku.print_board
+# sudoku.check_possibilities
 
