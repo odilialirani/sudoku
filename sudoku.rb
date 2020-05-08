@@ -18,19 +18,18 @@ class Sudoku
 
     @board = Array.new(row){Array.new(column, 0)}
     @pos_board = Array.new(row){Array.new(column, [])}
+    @pos_count = {}
   end
 
   def randomize
-    @fixed_board = @board = Array.new(row){Array.new(column, 0)}
-    row = @board.count
-    column = @board[0].count
+    @fixed_board = @board = Array.new(@row){Array.new(@column, 0)}
 
-    fill_count = (0.1 * row * column).floor
+    fill_count = (0.1 * @row * @column).floor
     
     x = 0
     while x < fill_count
-      i = rand(0...row)
-      j = rand(0...column)
+      i = rand(0...@row)
+      j = rand(0...@column)
       pos = possible_numbers(i,j)
 
       if @board[i][j] == 0
@@ -42,20 +41,41 @@ class Sudoku
   end
 
   def is_fixed(i, j)
-    return false
+    @fixed_board[i][j] > 0
   end
 
-  def check_possibilities(i, j)
+  def check_possibilities(i=nil, j=nil)
     @board.each_with_index do |row, x|
       row.each_with_index do |value, y|
+        next if is_fixed(x, y)
+
         if i.nil? && j.nil?
           @pos_board[x][y] = possible_numbers(x, y)
         else
           # We only want to update the possibilities for the row, col, and box if ij
           @pos_board[x][y] = possible_numbers(x, y) if x == i || y == j || xy_in_ij_box?(i,j,x,y)
         end
+
+        coord = OpenStruct.new
+        coord.x = x
+        coord.y = y
+        if @pos_count[@pos_board[x][y].count].nil?
+          @pos_count[@pos_board[x][y].count] = [coord]
+        else
+          @pos_count[@pos_board[x][y].count] << coord
+        end
       end
     end
+  end
+
+  # This will return the next OpenStruct tuple
+  def next_box
+    (1..@max_value).to_a.each do |a|
+      next if @pos_count[a].nil? || @pos_count[a].empty?
+      return @pos_count[a].pop
+    end
+
+    return nil
   end
 
   # def fill(i, j, arr, idx)
@@ -138,11 +158,15 @@ class Sudoku
       puts r
     end
   end
+
+  def pos_count
+    @pos_count
+  end
 end
 
 sudoku = Sudoku.new(9, 9)
 binding.pry
-sudoku.randomize
-sudoku.print_board
+# sudoku.randomize
+# sudoku.print_board
 # sudoku.check_possibilities
 
