@@ -1,7 +1,3 @@
-# Made with <3 by Odilia Lirani
-# Remember to take a break jg
-# Jgn marah2in inanimate objects
-
 require 'pry'
 
 class Sudoku
