@@ -41,6 +41,8 @@ class Sudoku
   end
 
   def check_possibilities(i=nil, j=nil)
+    @pos_count = {} if i.nil? && j.nil?
+
     @board.each_with_index do |row, x|
       row.each_with_index do |value, y|
         next if is_fixed(x, y)
@@ -49,6 +51,7 @@ class Sudoku
           @pos_board[x][y] = possible_numbers(x, y)
         else
           # We only want to update the possibilities for the row, col, and box if ij
+          # next if x == i && y == j # we don't want to update the
           @pos_board[x][y] = possible_numbers(x, y) if x == i || y == j || xy_in_ij_box?(i,j,x,y)
         end
 
@@ -65,43 +68,61 @@ class Sudoku
   end
 
   # This will return the next OpenStruct tuple
-  def next_box
+  def get_next_box
     (1..@max_value).to_a.each do |a|
       next if @pos_count[a].nil? || @pos_count[a].empty?
-      return @pos_count[a].pop
+      coord = @pos_count[a][-1]
+      return @pos_count[a].pop if @board[coord.x][coord.y] == 0
     end
 
     return nil
   end
 
-  # def fill(i, j, arr, idx)
-  #   return false if arr[idx].nil?
-  #   return true if @board[i][j].nil?
-  #   # return true  is_fixed(i, j)
+  def is_solved?
+    @board.each_with_index do |row, x|
+      row.each_with_index do |value, y|
+        return false if value == 0
+      end
+    end
 
-  #   @board[i][j] = arr[idx]
+    return true
+  end
 
-  #   # find next i, j
-  #   next_i = i
-  #   next_j = j+1
+  def fill(i, j, arr, idx)
+    return false if arr[idx].nil?
+    return true if is_fixed(i, j)
 
-  #   if next_j >= @board[i].count
-  #     next_i += 1
-  #     next_j = 0
-  #   end
+    @board[i][j] = arr[idx]
+    check_possibilities(i,j)
+    next_coord = get_next_box
 
-  #   return true if next_i == @board.count
+    if next_coord.nil?
+      # No more possible boxes
+      # Check if we've solved the puzzle
+      if is_solved?
+        return true
+      else
+        fill(i, j, arr, idx + 1)
+        # next_coord = get_next_box
+      end
+    end
 
-  #   next_pos = possible_numbers(next_i, next_j)
+    next_pos = @pos_board[next_coord.x][next_coord.y]
 
-  #   return true if fill(next_i, next_j, next_pos, 0)
-
-  #   return true && fill(i, j, arr, idx + 1)
-  # end
+    # mark this box as success if we can successfully fill the next box
+    return true if fill(next_coord.x, next_coord.y, next_pos, 0) 
+    
+    # Try filling with next value in the array
+    return fill(i, j, arr, idx + 1)
+  end
 
   def solve
-    # Want to fill the one with least possibilities
+    check_possibilities
+    coord = get_next_box
+    return false if coord.nil?
 
+    possible_values = possible_numbers(coord.x, coord.y)
+    fill(coord.x, coord.y, possible_values, 0)
   end
 
   # return x, y
@@ -158,10 +179,17 @@ class Sudoku
   def pos_count
     @pos_count
   end
+
+  def play
+    randomize
+    # print_board
+    solve
+    print_board
+  end
 end
 
 sudoku = Sudoku.new(9, 9)
-binding.pry
+sudoku.play
 # sudoku.randomize
 # sudoku.print_board
 # sudoku.check_possibilities
